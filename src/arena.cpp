@@ -3,8 +3,8 @@
 // Licensed under the Apache License v2.0
 
 #include <cassert>
-#include <cstring>
 
+#include "memutil.h"
 #include "osmemory.h"
 #include "arena.h"
 
@@ -25,8 +25,7 @@ Arena *stratum::AllocArena() {
     // Setup first Pool at the beginning of the allocated memory
     arena->pool = (Pool *) mem;
 
-    // TODO: use internal memset
-    memset(arena->pool, 0, sizeof(Pool));
+    util::MemoryZero(arena->pool, sizeof(Pool));
 
     arena->pool->arena = arena;
 
