@@ -10,6 +10,11 @@
 
 using namespace stratum;
 
+struct Emb {
+    size_t size;
+    size_t offset;
+};
+
 Memory default_allocator;
 
 Arena *Memory::FindOrCreateArena() {
@@ -40,15 +45,22 @@ bool Memory::Initialize() {
     return true;
 }
 
+Pool *Memory::AllocatePool(size_t clazz) {
+    std::scoped_lock alck(this->m_arenas_);
+
+    auto *arena = this->FindOrCreateArena();
+    if (arena == nullptr)
+        return nullptr;
+
+    return AllocPool(arena, clazz);
+}
+
 Pool *Memory::GetPool(size_t clazz) {
     Pool *pool = this->pools_[clazz].FindFree();
 
     if (pool == nullptr) {
-        {
-            std::scoped_lock alck(this->m_arenas_);
-            Arena *arena = this->FindOrCreateArena();
-            pool = AllocPool(arena, clazz);
-        }
+        if ((pool = this->AllocatePool(clazz)) == nullptr)
+            return nullptr;
 
         this->pools_[clazz].Insert(pool);
     }
@@ -64,13 +76,24 @@ void *Memory::Alloc(size_t size) noexcept {
     if (size <= STRATUM_BLOCK_MAX_SIZE) {
         std::scoped_lock lck(this->m_pools_[clazz]);
         auto *pool = GetPool(clazz);
+        if (pool == nullptr)
+            return nullptr;
 
         return AllocBlock(pool);
     }
 
-    // TODO
+    unsigned char *ptr;
+    if ((ptr = (unsigned char *) malloc(size + sizeof(Emb) + STRATUM_QUANTUM)) == nullptr)
+        return nullptr;
 
-    return nullptr;
+    auto tmp = (uintptr_t) (ptr + sizeof(Emb));
+    auto ptr_a = (unsigned char *) (tmp + (STRATUM_QUANTUM - (tmp % STRATUM_QUANTUM)));
+
+    auto *emb = (Emb *) ptr_a - sizeof(Emb);
+    emb->size = size;
+    emb->offset = ptr_a - ptr;
+
+    return ptr_a;
 }
 
 void Memory::FinalizeMemory() {
@@ -97,7 +120,8 @@ void Memory::Free(void *ptr) {
         return;
     }
 
-    // TODO
+    const auto *emb = (Emb *) ((unsigned char *) ptr - sizeof(Emb));
+    free(((unsigned char *) ptr) - emb->offset);
 }
 
 void *Memory::Realloc(void *ptr, size_t size) {
@@ -117,14 +141,19 @@ void *Memory::Realloc(void *ptr, size_t size) {
         if (actual > desired && (actual - desired < STRATUM_REALLOC_THRESHOLD))
             return ptr;
     } else {
-        // TODO
+        const auto *emb = (Emb *) (((unsigned char *) ptr) - sizeof(Emb));
+
+        src_sz = emb->size;
+
+        if (size > STRATUM_BLOCK_MAX_SIZE && src_sz >= size)
+            return ptr;
     }
 
     if ((tmp = Alloc(size)) == nullptr)
         return nullptr;
 
     util::MemoryCopy(tmp, ptr, src_sz > size ? size : src_sz);
-    Free(ptr);
+    this->Free(ptr);
     return tmp;
 }
 

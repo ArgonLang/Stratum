@@ -29,6 +29,8 @@ namespace stratum {
 
         Arena *FindOrCreateArena();
 
+        Pool *AllocatePool(size_t clazz);
+
         Pool *GetPool(size_t clazz);
 
         void TryReleaseMemory(Pool *pool, size_t clazz);
