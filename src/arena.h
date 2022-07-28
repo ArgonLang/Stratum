@@ -8,13 +8,27 @@
 #include <cstddef>
 #include <cstdint>
 
-#define STRATUM_PAGE_SIZE          4096             // Assume page size of 4096 bytes
-#define STRATUM_ARENA_SIZE         (256u << 10u)    // 256 KiB
-#define STRATUM_POOLS_AVAILABLE    (STRATUM_ARENA_SIZE / STRATUM_PAGE_SIZE)
+/**
+ * @brief Size of single page.
+ *
+ * Assume page size of 4096 bytes.
+ */
+#define STRATUM_PAGE_SIZE          4096
 
+/// Size of each individual arena (256 KiB)
+#define STRATUM_ARENA_SIZE         (256u << 10u)
+constexpr auto kStratumPoolsAvailable = STRATUM_ARENA_SIZE / STRATUM_PAGE_SIZE;
+
+/**
+ * @brief Memory quantum.
+ *
+ * The allocated memory is always aligned to this value.
+ */
 #define STRATUM_QUANTUM            8
+
+/// Maximum size of blocks managed by the memory pool.
 #define STRATUM_BLOCK_MAX_SIZE     1024
-#define STRATUM_CLASSES            (STRATUM_BLOCK_MAX_SIZE / STRATUM_QUANTUM)
+constexpr auto kStratumClasses = STRATUM_BLOCK_MAX_SIZE / STRATUM_QUANTUM;
 
 /*
  * Stratum memory layout:
@@ -42,38 +56,42 @@
 
 namespace stratum {
     struct alignas(STRATUM_QUANTUM)Arena {
-        /* Total pools in the arena */
+        /// Total pools in the arena.
         unsigned int pools;
 
-        /* Number of free pools in the arena */
+        /// Number of free pools in the arena.
         unsigned int free;
 
-        /* Pointer to linked-list of available pools */
+        /// Pointer to linked-list of available pools.
         struct Pool *pool;
 
-        /* Pointers to next and prev arena, arenas are linked between each other with a doubly linked-list */
+        /// Pointers to next arena.
         struct Arena *next;
+
+        /// Pointers to prev arena.
         struct Arena **prev;
     };
 
     struct alignas(STRATUM_QUANTUM)Pool {
-        /* Pointer to Arena */
+        /// Pointer to Arena.
         Arena *arena;
 
-        /* Total blocks in pool */
+        /// Total blocks in pool.
         unsigned short blocks;
 
-        /* Free blocks in pool */
+        /// Free blocks in pool.
         unsigned short free;
 
-        /* Size of single memory block */
+        /// Size of single memory block.
         unsigned short blocksz;
 
-        /* Pointer to linked-list of available blocks */
+        /// Pointer to linked-list of available blocks.
         void *block;
 
-        /* Pointers to next and prev pool of a specific size-class */
+        /// Pointers to next pool of a specific size-class.
         struct Pool *next;
+
+        /// Pointers to prev pool of a specific size-class.
         struct Pool **prev;
     };
 
@@ -97,7 +115,7 @@ namespace stratum {
         const auto *p = (Pool *) AlignDown(ptr, STRATUM_PAGE_SIZE);
         return p->arena != nullptr
                && (((uintptr_t) ptr - (uintptr_t) AlignDown(p->arena, STRATUM_PAGE_SIZE)) < STRATUM_PAGE_SIZE)
-               && p->arena->pools == STRATUM_POOLS_AVAILABLE;
+               && p->arena->pools == kStratumPoolsAvailable;
     }
 
     Arena *AllocArena();

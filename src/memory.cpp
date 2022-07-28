@@ -29,6 +29,11 @@ Arena *Memory::FindOrCreateArena() {
 }
 
 bool Memory::Initialize() {
+    std::scoped_lock lck(this->m_arenas_);
+
+    if(this->arenas_.Count()>0)
+        return true;
+
     for (int i = 0; i < STRATUM_MINIMUM_POOL; i++) {
         auto *arena = AllocArena();
 
@@ -68,7 +73,7 @@ Pool *Memory::GetPool(size_t clazz) {
     return pool;
 }
 
-void *Memory::Alloc(size_t size) noexcept {
+void *Memory::Alloc(size_t size) {
     size_t clazz = SizeToPoolClass(size);
 
     assert(size > 0);
@@ -94,6 +99,20 @@ void *Memory::Alloc(size_t size) noexcept {
     emb->offset = ptr_a - ptr;
 
     return ptr_a;
+}
+
+void *Memory::Calloc(size_t num, size_t size) {
+    void *area;
+
+    if (num == 0 || size == 0)
+        return nullptr;
+
+    if ((area = this->Alloc(num * size)) == nullptr)
+        return nullptr;
+
+    util::MemoryZero(area, num * size);
+
+    return area;
 }
 
 void Memory::FinalizeMemory() {
@@ -181,8 +200,12 @@ void Memory::TryReleaseMemory(Pool *pool, size_t clazz) {
 
 // DEFAULT ALLOCATOR
 
-void *stratum::Alloc(size_t size) noexcept {
+void *stratum::Alloc(size_t size) {
     return default_allocator.Alloc(size);
+}
+
+void *stratum::Calloc(size_t num, size_t size) {
+    return default_allocator.Calloc(num, size);
 }
 
 void stratum::Free(void *ptr) {

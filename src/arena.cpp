@@ -19,8 +19,8 @@ Arena *stratum::AllocArena() {
 
     // Arena was located in the last bytes of the first Pool
     arena = (Arena *) ((unsigned char *) mem) + (STRATUM_PAGE_SIZE - sizeof(Arena));
-    arena->pools = STRATUM_POOLS_AVAILABLE;
-    arena->free = STRATUM_POOLS_AVAILABLE;
+    arena->pools = kStratumPoolsAvailable;
+    arena->free = kStratumPoolsAvailable;
 
     // Setup first Pool at the beginning of the allocated memory
     arena->pool = (Pool *) mem;
