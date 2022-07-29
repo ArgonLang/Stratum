@@ -31,7 +31,7 @@ Arena *Memory::FindOrCreateArena() {
 bool Memory::Initialize() {
     std::scoped_lock lck(this->m_arenas_);
 
-    if(this->arenas_.Count()>0)
+    if (this->arenas_.Count() > 0)
         return true;
 
     for (int i = 0; i < STRATUM_MINIMUM_POOL; i++) {
@@ -91,10 +91,11 @@ void *Memory::Alloc(size_t size) {
     if ((ptr = (unsigned char *) malloc(size + sizeof(Emb) + STRATUM_QUANTUM)) == nullptr)
         return nullptr;
 
-    auto tmp = (uintptr_t) (ptr + sizeof(Emb));
-    auto ptr_a = (unsigned char *) (tmp + (STRATUM_QUANTUM - (tmp % STRATUM_QUANTUM)));
+    auto emb_off = (uintptr_t) (ptr + sizeof(Emb));
+    auto user_off = STRATUM_QUANTUM - (emb_off % STRATUM_QUANTUM);
+    auto ptr_a = (unsigned char *) (emb_off + (user_off != STRATUM_QUANTUM ? user_off : 0));
 
-    auto *emb = (Emb *) ptr_a - sizeof(Emb);
+    auto *emb = (Emb *) (ptr_a - sizeof(Emb));
     emb->size = size;
     emb->offset = ptr_a - ptr;
 
