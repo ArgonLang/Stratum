@@ -7,6 +7,7 @@
 #define STRATUM_MEMORY_H_
 
 #include <cstddef>
+#include <new>
 
 #include <support/linklist.h>
 
@@ -59,6 +60,30 @@ namespace stratum {
         void *Alloc(size_t size);
 
         /**
+         * @brief Allocates a block of memory and instantiate an object of type \p T.
+         *
+         * @tparam T Class to instantiate.
+         * @tparam Args Class constructor arguments.
+         * @return An object of type \p T.
+         */
+        template<typename T, typename ...Args>
+        inline T *AllocObject(Args ...args) {
+            auto mem = Alloc(sizeof(T));
+            T *obj = nullptr;
+
+            if (mem != nullptr) {
+                try {
+                    obj = new(mem) T(args...);
+                } catch (...) {
+                    Free(mem);
+                    throw;
+                }
+            }
+
+            return obj;
+        }
+
+        /**
          * @brief Allocate and zero-initialize array.
          *
          * Allocates a block of memory for an array of \p num elements, each of them \p size bytes long,
@@ -100,6 +125,17 @@ namespace stratum {
         void Free(void *ptr);
 
         /**
+         * @brief Call the object destructor and release the used memory block.
+         *
+         * @param obj Pointer to object to be freed.
+         */
+        template<typename T>
+        inline void FreeObject(T *obj) {
+            obj->~T();
+            Free(obj);
+        }
+
+        /**
          * @brief Changes the size of the memory block pointed to by ptr.
          *
          * The function may move the memory block to a new location (whose address is returned by the function).
@@ -113,6 +149,8 @@ namespace stratum {
         void *Realloc(void *ptr, size_t size);
     };
 
+    extern Memory default_allocator;
+
     /**
      * @brief Like Memory::Alloc but on the default instance.
      *
@@ -120,6 +158,18 @@ namespace stratum {
      * @return A void * to the beginning of the allocated block.
      */
     void *Alloc(size_t size);
+
+    /**
+     * @brief Like Memory::AllocObject but on the default instance.
+     *
+     * @tparam T Class to instantiate.
+     * @tparam Args Class constructor arguments.
+     * @return An object of type \p T.
+     */
+    template<typename T, typename ...Args>
+    inline T *AllocObject(Args ...args) {
+        return default_allocator.AllocObject<T>(args...);
+    }
 
     /**
      * @brief Like Memory::Calloc but on the default instance.
@@ -158,6 +208,17 @@ namespace stratum {
      * @param ptr Pointer to memory block to be freed.
      */
     void Free(void *ptr);
+
+    /**
+     * @brief Like Memory::FreeObject but on the default instance.
+     *
+     * @param obj Pointer to object to be freed.
+     */
+    template<typename T>
+    inline void FreeObject(T *obj) {
+        obj->~T();
+        default_allocator.Free(obj);
+    }
 
     /**
      * @brief Like Memory::Realloc but on the default instance.

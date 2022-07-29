@@ -15,7 +15,7 @@ struct Emb {
     size_t offset;
 };
 
-Memory default_allocator;
+Memory stratum::default_allocator;
 
 Arena *Memory::FindOrCreateArena() {
     Arena *arena = this->arenas_.FindFree();
