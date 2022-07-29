@@ -86,7 +86,7 @@ namespace stratum {
         /**
          * @brief Release all memory managed by this instance of Memory.
          */
-        void FinalizeMemory();
+        void Finalize();
 
         /**
          * @brief Release a block of memory previously allocated by a call to Memory::Alloc, Memory::Calloc
@@ -145,12 +145,12 @@ namespace stratum {
      *
      * @return true in case of success, false otherwise.
      */
-    bool InitializeMemory();
+    bool Initialize();
 
     /**
      * @brief Release all memory managed by default instance of the memory manager.
      */
-    void FinalizeMemory();
+    void Finalize();
 
     /**
      * @brief Like Memory::Free but on the default instance.

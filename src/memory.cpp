@@ -39,7 +39,7 @@ bool Memory::Initialize() {
 
         if (arena == nullptr) {
             if (i > 0) {
-                this->FinalizeMemory();
+                this->Finalize();
             }
             return false;
         }
@@ -116,7 +116,7 @@ void *Memory::Calloc(size_t num, size_t size) {
     return area;
 }
 
-void Memory::FinalizeMemory() {
+void Memory::Finalize() {
     Arena *arena;
 
     while ((arena = this->arenas_.Pop()) != nullptr) {
@@ -217,10 +217,10 @@ void *stratum::Realloc(void *ptr, size_t size) {
     return default_allocator.Realloc(ptr, size);
 }
 
-bool stratum::InitializeMemory() {
+bool stratum::Initialize() {
     return default_allocator.Initialize();
 }
 
-void stratum::FinalizeMemory() {
-    default_allocator.FinalizeMemory();
+void stratum::Finalize() {
+    default_allocator.Finalize();
 }
