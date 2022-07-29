@@ -36,7 +36,7 @@ namespace stratum::util {
      * @param size2 Size of second block of memory.
      * @return Pointer to \p dest memory block.
      */
-    void *MemoryConcat(void *dest, size_t sized, void *s1, size_t size1, void *s2, size_t size2);
+    void *MemoryConcat(void *dest, size_t sized, const void *s1, size_t size1, const void *s2, size_t size2);
 
     /**
      * @brief Copies the values of source memory block to destination memory block.

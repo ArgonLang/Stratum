@@ -114,7 +114,7 @@ namespace stratum {
     inline bool AddressInArenas(const void *ptr) {
         const auto *p = (Pool *) AlignDown(ptr, STRATUM_PAGE_SIZE);
         return p->arena != nullptr
-               && (((uintptr_t) ptr - (uintptr_t) AlignDown(p->arena, STRATUM_PAGE_SIZE)) < STRATUM_PAGE_SIZE)
+               && (((uintptr_t) ptr - (uintptr_t) AlignDown(p->arena, STRATUM_PAGE_SIZE)) < STRATUM_ARENA_SIZE)
                && p->arena->pools == kStratumPoolsAvailable;
     }
 

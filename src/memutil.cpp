@@ -15,15 +15,16 @@ int stratum::util::MemoryCompare(const void *ptr1, const void *ptr2, size_t num)
     else if (ptr2 == nullptr)
         return *p1;
 
-    do {
+    while (num-- != 0) {
         if (*p1++ != *p2++)
             return *--p1 - *--p2;
-    } while (--num != 0);
+    }
 
     return 0;
 }
 
-void *stratum::util::MemoryConcat(void *dest, size_t sized, void *s1, size_t size1, void *s2, size_t size2) {
+void *stratum::util::MemoryConcat(void *dest, size_t sized, const void *s1, size_t size1,
+                                  const void *s2, size_t size2) {
     if (size1 > sized)
         size1 = sized;
 
