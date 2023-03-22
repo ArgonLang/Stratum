@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
-add_subdirectory(src)
+add_subdirectory(stratum)
 add_subdirectory(test EXCLUDE_FROM_ALL)
 
 # *** Install steps ***
@@ -18,8 +18,8 @@ install(TARGETS ${PROJECT_NAME}
         EXPORT StratumTargets
         DESTINATION lib)
 
-install(DIRECTORY src/
-        DESTINATION include/${PROJECT_NAME}
+install(DIRECTORY stratum/
+        DESTINATION include/stratum
         FILES_MATCHING PATTERN "*.h")
 
 install(EXPORT StratumTargets
